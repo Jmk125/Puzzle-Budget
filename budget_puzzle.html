@@ -102,6 +102,10 @@
             <strong>Double-click:</strong> Hide/Show pieces<br>
             <strong>Click + drag dashed boundary:</strong> Adjust budget constraint
         </div>
+        <label style="margin-top: 10px; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9em; color: #555;">
+            <input id="constrainBudget" type="checkbox" checked>
+            Constrain budget
+        </label>
         <button id="resetButton" style="margin-top: 10px; padding: 8px 20px; background: #667eea; color: white; border: none; border-radius: 6px; font-size: 0.9em; cursor: pointer; font-weight: bold;">Reset Puzzle</button>
     </div>
     
@@ -191,18 +195,19 @@
         
         // Budget boundary - perfectly fits the puzzle initially
         let boundary = {
-            x: 170,
-            y: 120,
-            width: 630,
-            height: 510
+            x: startX,
+            y: startY,
+            width: puzzleSize.width,
+            height: puzzleSize.height
         };
         
-        const initialBoundary = { x: 170, y: 120, width: 630, height: 510 };
+        const initialBoundary = { x: startX, y: startY, width: puzzleSize.width, height: puzzleSize.height };
         
         let selectedPiece = null;
         let selectedBoundaryEdge = null;
         let dragStart = { x: 0, y: 0 };
         let mouseButton = null;
+        const constrainBudgetCheckbox = document.getElementById('constrainBudget');
         
         function drawPiece(piece) {
             if (!piece.visible) return;
@@ -531,6 +536,24 @@
             return sizes;
         }
 
+        function scalePuzzle(scale) {
+            if (!Number.isFinite(scale) || scale <= 0) return;
+            colWidths = colWidths.map(value => Math.max(grid.minColWidth, value * scale));
+            rowHeights = rowHeights.map(value => Math.max(grid.minRowHeight, value * scale));
+            applyGridLayout();
+        }
+
+        function getUniformScale(piece, dx, dy) {
+            const baseWidth = colWidths[piece.col];
+            const baseHeight = rowHeights[piece.row];
+            const scaleX = baseWidth > 0 ? (baseWidth + dx) / baseWidth : 1;
+            const scaleY = baseHeight > 0 ? (baseHeight + dy) / baseHeight : 1;
+
+            if (dx === 0) return Math.max(0.1, scaleY);
+            if (dy === 0) return Math.max(0.1, scaleX);
+            return Math.max(0.1, (scaleX + scaleY) / 2);
+        }
+
         function resizeGrid(piece, dx, dy) {
             distributeDelta(colWidths, piece.col, dx, grid.minColWidth);
             distributeDelta(rowHeights, piece.row, dy, grid.minRowHeight);
@@ -639,7 +662,12 @@
             const dy = y - dragStart.y;
             
             if (mouseButton === 0) {
-                resizeGrid(selectedPiece, dx, dy);
+                if (constrainBudgetCheckbox.checked) {
+                    resizeGrid(selectedPiece, dx, dy);
+                } else {
+                    const scale = getUniformScale(selectedPiece, dx, dy);
+                    scalePuzzle(scale);
+                }
             } else if (mouseButton === 2) {
                 // Right click: move
                 selectedPiece.x += dx;
