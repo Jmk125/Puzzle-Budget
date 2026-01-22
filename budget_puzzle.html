@@ -99,7 +99,7 @@
             <strong>Left-click + drag:</strong> Resize a piece (others auto-fit) | 
             <strong>Right-click + drag:</strong> Move pieces | 
             <strong>Middle-click + drag:</strong> Rotate pieces | 
-            <strong>Double-click:</strong> Hide/Show pieces<br>
+            <strong>Double-click + hold:</strong> Hide others / Show all<br>
             <strong>Click + drag dashed boundary:</strong> Adjust budget constraint
         </div>
         <label style="margin-top: 10px; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9em; color: #555;">
@@ -207,6 +207,10 @@
         let selectedBoundaryEdge = null;
         let dragStart = { x: 0, y: 0 };
         let mouseButton = null;
+        let doubleClickHoldTimer = null;
+        let doubleClickHoldPiece = null;
+        let doubleClickHoldTriggered = false;
+        const doubleClickHoldThreshold = 250;
         const constrainBudgetCheckbox = document.getElementById('constrainBudget');
         let puzzleOrigin = { x: startX, y: startY };
         
@@ -575,6 +579,22 @@
             rowHeights = normalizeSizes(rowHeights, grid.minRowHeight, puzzleSize.height);
             applyGridLayout();
         }
+
+        function toggleQuickHide(piece) {
+            if (!piece) return;
+            const hasHiddenPieces = pieces.some(p => !p.visible);
+            if (hasHiddenPieces) {
+                pieces.forEach(p => {
+                    p.visible = true;
+                });
+            } else {
+                pieces.forEach(p => {
+                    p.visible = p === piece;
+                });
+                piece.visible = true;
+            }
+            draw();
+        }
         
         canvas.addEventListener('mousedown', (e) => {
             const rect = canvas.getBoundingClientRect();
@@ -583,6 +603,7 @@
             
             mouseButton = e.button; // 0: left, 1: middle, 2: right
             dragStart = { x, y };
+            doubleClickHoldTriggered = false;
             
             // Check if clicking on boundary edge
             selectedBoundaryEdge = getBoundaryEdge(x, y);
@@ -598,6 +619,13 @@
                     // Move to top
                     pieces.splice(i, 1);
                     pieces.push(selectedPiece);
+                    if (mouseButton === 0 && e.detail === 2) {
+                        doubleClickHoldPiece = selectedPiece;
+                        doubleClickHoldTimer = setTimeout(() => {
+                            doubleClickHoldTriggered = true;
+                            toggleQuickHide(doubleClickHoldPiece);
+                        }, doubleClickHoldThreshold);
+                    }
                     break;
                 }
             }
@@ -607,6 +635,10 @@
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
+
+            if (doubleClickHoldTriggered) {
+                return;
+            }
             
             // Update cursor based on boundary edge
             const edge = getBoundaryEdge(x, y);
@@ -698,23 +730,14 @@
         });
         
         canvas.addEventListener('mouseup', () => {
+            if (doubleClickHoldTimer) {
+                clearTimeout(doubleClickHoldTimer);
+                doubleClickHoldTimer = null;
+            }
+            doubleClickHoldPiece = null;
             selectedPiece = null;
             selectedBoundaryEdge = null;
             mouseButton = null;
-        });
-        
-        canvas.addEventListener('dblclick', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            for (let piece of pieces) {
-                if (isPointInPiece(x, y, piece)) {
-                    piece.visible = !piece.visible;
-                    draw();
-                    break;
-                }
-            }
         });
         
         canvas.addEventListener('contextmenu', (e) => {
