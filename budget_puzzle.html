@@ -208,6 +208,7 @@
         let dragStart = { x: 0, y: 0 };
         let mouseButton = null;
         const constrainBudgetCheckbox = document.getElementById('constrainBudget');
+        let puzzleOrigin = { x: startX, y: startY };
         
         function drawPiece(piece) {
             if (!piece.visible) return;
@@ -410,12 +411,12 @@
         
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            drawBoundary();
-            
+
             pieces.forEach(piece => {
                 drawPiece(piece);
             });
+
+            drawBoundary();
         }
         
         function isPointInPiece(x, y, piece) {
@@ -453,12 +454,12 @@
         function applyGridLayout() {
             const colOffsets = [];
             const rowOffsets = [];
-            let runningX = startX;
+            let runningX = puzzleOrigin.x;
             for (let col = 0; col < grid.cols; col++) {
                 colOffsets[col] = runningX;
                 runningX += colWidths[col];
             }
-            let runningY = startY;
+            let runningY = puzzleOrigin.y;
             for (let row = 0; row < grid.rows; row++) {
                 rowOffsets[row] = runningY;
                 runningY += rowHeights[row];
@@ -538,8 +539,20 @@
 
         function scalePuzzle(scale) {
             if (!Number.isFinite(scale) || scale <= 0) return;
+            const currentWidth = colWidths.reduce((sum, value) => sum + value, 0);
+            const currentHeight = rowHeights.reduce((sum, value) => sum + value, 0);
+            const centerX = puzzleOrigin.x + currentWidth / 2;
+            const centerY = puzzleOrigin.y + currentHeight / 2;
+
             colWidths = colWidths.map(value => Math.max(grid.minColWidth, value * scale));
             rowHeights = rowHeights.map(value => Math.max(grid.minRowHeight, value * scale));
+
+            const nextWidth = colWidths.reduce((sum, value) => sum + value, 0);
+            const nextHeight = rowHeights.reduce((sum, value) => sum + value, 0);
+            puzzleOrigin = {
+                x: centerX - nextWidth / 2,
+                y: centerY - nextHeight / 2
+            };
             applyGridLayout();
         }
 
@@ -722,6 +735,7 @@
 
             colWidths = [...initialColWidths];
             rowHeights = [...initialRowHeights];
+            puzzleOrigin = { x: startX, y: startY };
             applyGridLayout();
             
             // Reset boundary
