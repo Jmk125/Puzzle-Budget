@@ -96,12 +96,16 @@
     <div class="header">
         <h1>Estimate Breakdown</h1>
         <div class="instructions">
-            <strong>Left-click + drag:</strong> Resize pieces | 
+            <strong>Left-click + drag:</strong> Resize a piece (others auto-fit) | 
             <strong>Right-click + drag:</strong> Move pieces | 
             <strong>Middle-click + drag:</strong> Rotate pieces | 
             <strong>Double-click:</strong> Hide/Show pieces<br>
             <strong>Click + drag dashed boundary:</strong> Adjust budget constraint
         </div>
+        <label style="margin-top: 10px; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9em; color: #555;">
+            <input id="constrainBudget" type="checkbox" checked>
+            Constrain budget
+        </label>
         <button id="resetButton" style="margin-top: 10px; padding: 8px 20px; background: #667eea; color: white; border: none; border-radius: 6px; font-size: 0.9em; cursor: pointer; font-weight: bold;">Reset Puzzle</button>
     </div>
     
@@ -147,46 +151,64 @@
         
         const initialPieces = [
             // Row 1
-            { x: startX, y: startY, width: 140, height: 110, rotation: 0, color: '#FF6B6B', label: 'Structural', visible: true, tabs: { top: 0, right: 1, bottom: 1, left: 0 } },
-            { x: startX + 140, y: startY, width: 165, height: 110, rotation: 0, color: '#4ECDC4', label: 'MEP', visible: true, tabs: { top: 0, right: -1, bottom: -1, left: -1 } },
-            { x: startX + 305, y: startY, width: 135, height: 110, rotation: 0, color: '#45B7D1', label: 'Finishes', visible: true, tabs: { top: 0, right: 1, bottom: 1, left: 1 } },
-            { x: startX + 440, y: startY, width: 160, height: 110, rotation: 0, color: '#FFA07A', label: 'Site Work', visible: true, tabs: { top: 0, right: 0, bottom: -1, left: -1 } },
+            { x: startX, y: startY, width: 140, height: 110, rotation: 0, color: '#FF6B6B', label: 'Structural', visible: true, row: 0, col: 0, tabs: { top: 0, right: 1, bottom: 1, left: 0 } },
+            { x: startX + 140, y: startY, width: 165, height: 110, rotation: 0, color: '#4ECDC4', label: 'MEP', visible: true, row: 0, col: 1, tabs: { top: 0, right: -1, bottom: -1, left: -1 } },
+            { x: startX + 305, y: startY, width: 135, height: 110, rotation: 0, color: '#45B7D1', label: 'Finishes', visible: true, row: 0, col: 2, tabs: { top: 0, right: 1, bottom: 1, left: 1 } },
+            { x: startX + 440, y: startY, width: 160, height: 110, rotation: 0, color: '#FFA07A', label: 'Site Work', visible: true, row: 0, col: 3, tabs: { top: 0, right: 0, bottom: -1, left: -1 } },
             
             // Row 2
-            { x: startX, y: startY + 110, width: 140, height: 125, rotation: 0, color: '#98D8C8', label: 'Equipment', visible: true, tabs: { top: -1, right: -1, bottom: 1, left: 0 } },
-            { x: startX + 140, y: startY + 110, width: 165, height: 125, rotation: 0, color: '#F7DC6F', label: 'Specialties', visible: true, tabs: { top: 1, right: 1, bottom: -1, left: 1 } },
-            { x: startX + 305, y: startY + 110, width: 135, height: 125, rotation: 0, color: '#85C1E2', label: 'Envelope', visible: true, tabs: { top: -1, right: -1, bottom: 1, left: -1 } },
-            { x: startX + 440, y: startY + 110, width: 160, height: 125, rotation: 0, color: '#F8B88B', label: 'Roofing', visible: true, tabs: { top: 1, right: 0, bottom: -1, left: 1 } },
+            { x: startX, y: startY + 110, width: 140, height: 125, rotation: 0, color: '#98D8C8', label: 'Equipment', visible: true, row: 1, col: 0, tabs: { top: -1, right: -1, bottom: 1, left: 0 } },
+            { x: startX + 140, y: startY + 110, width: 165, height: 125, rotation: 0, color: '#F7DC6F', label: 'Specialties', visible: true, row: 1, col: 1, tabs: { top: 1, right: 1, bottom: -1, left: 1 } },
+            { x: startX + 305, y: startY + 110, width: 135, height: 125, rotation: 0, color: '#85C1E2', label: 'Envelope', visible: true, row: 1, col: 2, tabs: { top: -1, right: -1, bottom: 1, left: -1 } },
+            { x: startX + 440, y: startY + 110, width: 160, height: 125, rotation: 0, color: '#F8B88B', label: 'Roofing', visible: true, row: 1, col: 3, tabs: { top: 1, right: 0, bottom: -1, left: 1 } },
             
             // Row 3
-            { x: startX, y: startY + 235, width: 140, height: 115, rotation: 0, color: '#FAD7A1', label: 'Glazing', visible: true, tabs: { top: -1, right: 1, bottom: -1, left: 0 } },
-            { x: startX + 140, y: startY + 235, width: 165, height: 115, rotation: 0, color: '#D5A6BD', label: 'Casework', visible: true, tabs: { top: 1, right: -1, bottom: 1, left: -1 } },
-            { x: startX + 305, y: startY + 235, width: 135, height: 115, rotation: 0, color: '#9FD3C7', label: 'Plumbing', visible: true, tabs: { top: -1, right: 1, bottom: -1, left: 1 } },
-            { x: startX + 440, y: startY + 235, width: 160, height: 115, rotation: 0, color: '#C7CEEA', label: 'HVAC', visible: true, tabs: { top: 1, right: 0, bottom: 1, left: -1 } },
+            { x: startX, y: startY + 235, width: 140, height: 115, rotation: 0, color: '#FAD7A1', label: 'Glazing', visible: true, row: 2, col: 0, tabs: { top: -1, right: 1, bottom: -1, left: 0 } },
+            { x: startX + 140, y: startY + 235, width: 165, height: 115, rotation: 0, color: '#D5A6BD', label: 'Casework', visible: true, row: 2, col: 1, tabs: { top: 1, right: -1, bottom: 1, left: -1 } },
+            { x: startX + 305, y: startY + 235, width: 135, height: 115, rotation: 0, color: '#9FD3C7', label: 'Plumbing', visible: true, row: 2, col: 2, tabs: { top: -1, right: 1, bottom: -1, left: 1 } },
+            { x: startX + 440, y: startY + 235, width: 160, height: 115, rotation: 0, color: '#C7CEEA', label: 'HVAC', visible: true, row: 2, col: 3, tabs: { top: 1, right: 0, bottom: 1, left: -1 } },
             
             // Row 4
-            { x: startX, y: startY + 350, width: 140, height: 130, rotation: 0, color: '#FFB6B9', label: 'Electrical', visible: true, tabs: { top: 1, right: -1, bottom: 0, left: 0 } },
-            { x: startX + 140, y: startY + 350, width: 165, height: 130, rotation: 0, color: '#BAE1FF', label: 'Fire Prot.', visible: true, tabs: { top: -1, right: 1, bottom: 0, left: 1 } },
-            { x: startX + 305, y: startY + 350, width: 135, height: 130, rotation: 0, color: '#B4E7CE', label: 'Concrete', visible: true, tabs: { top: 1, right: -1, bottom: 0, left: -1 } },
-            { x: startX + 440, y: startY + 350, width: 160, height: 130, rotation: 0, color: '#DDA15E', label: 'Masonry', visible: true, tabs: { top: -1, right: 0, bottom: 0, left: 1 } },
+            { x: startX, y: startY + 350, width: 140, height: 130, rotation: 0, color: '#FFB6B9', label: 'Electrical', visible: true, row: 3, col: 0, tabs: { top: 1, right: -1, bottom: 0, left: 0 } },
+            { x: startX + 140, y: startY + 350, width: 165, height: 130, rotation: 0, color: '#BAE1FF', label: 'Fire Prot.', visible: true, row: 3, col: 1, tabs: { top: -1, right: 1, bottom: 0, left: 1 } },
+            { x: startX + 305, y: startY + 350, width: 135, height: 130, rotation: 0, color: '#B4E7CE', label: 'Concrete', visible: true, row: 3, col: 2, tabs: { top: 1, right: -1, bottom: 0, left: -1 } },
+            { x: startX + 440, y: startY + 350, width: 160, height: 130, rotation: 0, color: '#DDA15E', label: 'Masonry', visible: true, row: 3, col: 3, tabs: { top: -1, right: 0, bottom: 0, left: 1 } },
         ];
         
         const pieces = JSON.parse(JSON.stringify(initialPieces));
+
+        const grid = {
+            rows: 4,
+            cols: 4,
+            minColWidth: 70,
+            minRowHeight: 70
+        };
+
+        const initialColWidths = [140, 165, 135, 160];
+        const initialRowHeights = [110, 125, 115, 130];
+        let colWidths = [...initialColWidths];
+        let rowHeights = [...initialRowHeights];
+        const puzzleSize = {
+            width: initialColWidths.reduce((sum, value) => sum + value, 0),
+            height: initialRowHeights.reduce((sum, value) => sum + value, 0)
+        };
         
         // Budget boundary - perfectly fits the puzzle initially
         let boundary = {
-            x: 170,
-            y: 120,
-            width: 630,
-            height: 510
+            x: startX,
+            y: startY,
+            width: puzzleSize.width,
+            height: puzzleSize.height
         };
         
-        const initialBoundary = { x: 170, y: 120, width: 630, height: 510 };
+        const initialBoundary = { x: startX, y: startY, width: puzzleSize.width, height: puzzleSize.height };
         
         let selectedPiece = null;
         let selectedBoundaryEdge = null;
         let dragStart = { x: 0, y: 0 };
         let mouseButton = null;
+        const constrainBudgetCheckbox = document.getElementById('constrainBudget');
+        let puzzleOrigin = { x: startX, y: startY };
         
         function drawPiece(piece) {
             if (!piece.visible) return;
@@ -389,12 +411,12 @@
         
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            drawBoundary();
-            
+
             pieces.forEach(piece => {
                 drawPiece(piece);
             });
+
+            drawBoundary();
         }
         
         function isPointInPiece(x, y, piece) {
@@ -427,6 +449,131 @@
             if (Math.abs(x - (boundary.x + boundary.width)) < tolerance && y > boundary.y && y < boundary.y + boundary.height) return 'right';
             
             return null;
+        }
+
+        function applyGridLayout() {
+            const colOffsets = [];
+            const rowOffsets = [];
+            let runningX = puzzleOrigin.x;
+            for (let col = 0; col < grid.cols; col++) {
+                colOffsets[col] = runningX;
+                runningX += colWidths[col];
+            }
+            let runningY = puzzleOrigin.y;
+            for (let row = 0; row < grid.rows; row++) {
+                rowOffsets[row] = runningY;
+                runningY += rowHeights[row];
+            }
+
+            pieces.forEach(piece => {
+                piece.x = colOffsets[piece.col];
+                piece.y = rowOffsets[piece.row];
+                piece.width = colWidths[piece.col];
+                piece.height = rowHeights[piece.row];
+            });
+        }
+
+        function distributeDelta(sizes, index, delta, minSize) {
+            if (delta === 0) return;
+            if (delta > 0) {
+                const originalSize = sizes[index];
+                const available = sizes.reduce((sum, size, i) => {
+                    return i === index ? sum : sum + Math.max(0, size - minSize);
+                }, 0);
+                const appliedDelta = Math.min(delta, available);
+                sizes[index] += appliedDelta;
+
+                let remaining = sizes[index] - originalSize;
+                const shrinkables = sizes.map((size, i) => {
+                    return i === index ? 0 : Math.max(0, size - minSize);
+                });
+                const totalShrinkable = shrinkables.reduce((sum, value) => sum + value, 0);
+                if (totalShrinkable > 0) {
+                    sizes.forEach((size, i) => {
+                        if (i === index) return;
+                        const portion = (shrinkables[i] / totalShrinkable) * remaining;
+                        sizes[i] -= portion;
+                    });
+                }
+            } else {
+                const originalSize = sizes[index];
+                sizes[index] = Math.max(minSize, sizes[index] + delta);
+                const appliedDelta = sizes[index] - originalSize;
+                let remaining = -appliedDelta;
+                const totalGrowable = sizes.reduce((sum, size, i) => {
+                    return i === index ? sum : sum + size;
+                }, 0);
+                if (totalGrowable > 0) {
+                    sizes.forEach((size, i) => {
+                        if (i === index) return;
+                        sizes[i] += (size / totalGrowable) * remaining;
+                    });
+                }
+            }
+        }
+
+        function normalizeSizes(sizes, minSize, target) {
+            let total = sizes.reduce((sum, value) => sum + value, 0);
+            if (total === 0) return sizes;
+            let scale = target / total;
+            sizes = sizes.map(value => Math.max(minSize, value * scale));
+            total = sizes.reduce((sum, value) => sum + value, 0);
+
+            const delta = target - total;
+            if (Math.abs(delta) < 0.01) return sizes;
+
+            if (delta < 0) {
+                const shrinkables = sizes.map(value => Math.max(0, value - minSize));
+                const totalShrinkable = shrinkables.reduce((sum, value) => sum + value, 0);
+                if (totalShrinkable > 0) {
+                    sizes = sizes.map((value, i) => value - (shrinkables[i] / totalShrinkable) * Math.abs(delta));
+                }
+            } else {
+                const totalGrowable = sizes.reduce((sum, value) => sum + value, 0);
+                if (totalGrowable > 0) {
+                    sizes = sizes.map(value => value + (value / totalGrowable) * delta);
+                }
+            }
+            return sizes;
+        }
+
+        function scalePuzzle(scale) {
+            if (!Number.isFinite(scale) || scale <= 0) return;
+            const currentWidth = colWidths.reduce((sum, value) => sum + value, 0);
+            const currentHeight = rowHeights.reduce((sum, value) => sum + value, 0);
+            const centerX = puzzleOrigin.x + currentWidth / 2;
+            const centerY = puzzleOrigin.y + currentHeight / 2;
+
+            colWidths = colWidths.map(value => Math.max(grid.minColWidth, value * scale));
+            rowHeights = rowHeights.map(value => Math.max(grid.minRowHeight, value * scale));
+
+            const nextWidth = colWidths.reduce((sum, value) => sum + value, 0);
+            const nextHeight = rowHeights.reduce((sum, value) => sum + value, 0);
+            puzzleOrigin = {
+                x: centerX - nextWidth / 2,
+                y: centerY - nextHeight / 2
+            };
+            applyGridLayout();
+        }
+
+        function getUniformScale(piece, dx, dy) {
+            const baseWidth = colWidths[piece.col];
+            const baseHeight = rowHeights[piece.row];
+            const scaleX = baseWidth > 0 ? (baseWidth + dx) / baseWidth : 1;
+            const scaleY = baseHeight > 0 ? (baseHeight + dy) / baseHeight : 1;
+
+            if (dx === 0) return Math.max(0.1, scaleY);
+            if (dy === 0) return Math.max(0.1, scaleX);
+            return Math.max(0.1, (scaleX + scaleY) / 2);
+        }
+
+        function resizeGrid(piece, dx, dy) {
+            distributeDelta(colWidths, piece.col, dx, grid.minColWidth);
+            distributeDelta(rowHeights, piece.row, dy, grid.minRowHeight);
+
+            colWidths = normalizeSizes(colWidths, grid.minColWidth, puzzleSize.width);
+            rowHeights = normalizeSizes(rowHeights, grid.minRowHeight, puzzleSize.height);
+            applyGridLayout();
         }
         
         canvas.addEventListener('mousedown', (e) => {
@@ -528,62 +675,11 @@
             const dy = y - dragStart.y;
             
             if (mouseButton === 0) {
-                // Left click: resize while maintaining overall puzzle dimensions
-                
-                // Store original dimensions
-                const origWidth = selectedPiece.width;
-                const origHeight = selectedPiece.height;
-                
-                // Apply the resize
-                selectedPiece.width += dx;
-                selectedPiece.height += dy;
-                selectedPiece.width = Math.max(50, selectedPiece.width);
-                selectedPiece.height = Math.max(50, selectedPiece.height);
-                
-                // Calculate the ratio of size change
-                const widthRatio = selectedPiece.width / origWidth;
-                const heightRatio = selectedPiece.height / origHeight;
-                
-                // Get all visible pieces
-                const visiblePieces = pieces.filter(p => p.visible);
-                
-                if (visiblePieces.length > 1) {
-                    // Calculate current total puzzle dimensions
-                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                    visiblePieces.forEach(p => {
-                        minX = Math.min(minX, p.x);
-                        minY = Math.min(minY, p.y);
-                        maxX = Math.max(maxX, p.x + p.width);
-                        maxY = Math.max(maxY, p.y + p.height);
-                    });
-                    
-                    const currentPuzzleWidth = maxX - minX;
-                    const currentPuzzleHeight = maxY - minY;
-                    
-                    // Target puzzle dimensions (initial boundary size)
-                    const targetWidth = 600; // Initial puzzle width
-                    const targetHeight = 480; // Initial puzzle height
-                    
-                    // Calculate scale factors needed to fit back into target dimensions
-                    const scaleX = targetWidth / currentPuzzleWidth;
-                    const scaleY = targetHeight / currentPuzzleHeight;
-                    
-                    // Apply uniform scaling to all pieces to maintain proportions
-                    const uniformScale = Math.min(scaleX, scaleY);
-                    
-                    visiblePieces.forEach(p => {
-                        // Scale dimensions
-                        p.width *= uniformScale;
-                        p.height *= uniformScale;
-                        
-                        // Scale position relative to puzzle origin
-                        p.x = startX + (p.x - minX) * uniformScale;
-                        p.y = startY + (p.y - minY) * uniformScale;
-                        
-                        // Ensure minimum size
-                        p.width = Math.max(40, p.width);
-                        p.height = Math.max(40, p.height);
-                    });
+                if (constrainBudgetCheckbox.checked) {
+                    resizeGrid(selectedPiece, dx, dy);
+                } else {
+                    const scale = getUniformScale(selectedPiece, dx, dy);
+                    scalePuzzle(scale);
                 }
             } else if (mouseButton === 2) {
                 // Right click: move
@@ -636,6 +732,11 @@
                 pieces[i].rotation = initialPieces[i].rotation;
                 pieces[i].visible = initialPieces[i].visible;
             }
+
+            colWidths = [...initialColWidths];
+            rowHeights = [...initialRowHeights];
+            puzzleOrigin = { x: startX, y: startY };
+            applyGridLayout();
             
             // Reset boundary
             boundary.x = initialBoundary.x;
@@ -646,6 +747,7 @@
             draw();
         });
         
+        applyGridLayout();
         // Initial draw
         draw();
     </script>
